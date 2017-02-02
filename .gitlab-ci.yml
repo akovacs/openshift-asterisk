@@ -1,0 +1,24 @@
+image: docker:git
+services:
+  - docker:dind
+
+before_script:
+  - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.gitlab.com
+  - docker login -e ma@gbraad.nl -u gbraad -p $DOCKER_PASSWORD
+
+stages:
+  - build
+  - sync
+
+build_image:
+  stage: build
+  script:
+    - docker build -t registry.gitlab.com/gbraad/openshift-asterisk:latest .
+    - docker push registry.gitlab.com/gbraad/openshift-asterisk:latest
+
+clone_image:
+  stage: sync
+  script:
+    - docker pull registry.gitlab.com/gbraad/openshift-asterisk:latest
+    - docker tag registry.gitlab.com/gbraad/openshift-asterisk:latest gbraad/openshift-asterisk:latest
+    - docker push gbraad/openshift-asterisk:latest
