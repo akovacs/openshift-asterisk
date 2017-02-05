@@ -2,12 +2,11 @@ FROM centos:7
 MAINTAINER Joeri van Dooren <ure@moreorless.io>
 
 RUN yum update -y && \
-yum install -y epel-release && \
-
-    # upgrade to 13.11
+    yum install -y epel-release && \
     yum install subversion patch wget git kernel-headers gcc gcc-c++ cpp ncurses ncurses-devel libxml2 libxml2-devel sqlite sqlite-devel openssl-devel newt-devel kernel-devel uuid-devel speex-devel gsm-devel libuuid-devel net-snmp-devel xinetd tar jansson-devel make bzip2 libsrtp libsrtp-devel gnutls-devel doxygen texinfo curl-devel net-snmp-devel neon-devel -y && \
     yum clean all && \
     cd /tmp && \
+    
     git clone https://github.com/asterisk/pjproject.git -b pjproject-2.4.5 --depth 1 && \
     cd pjproject && \
     ./configure --prefix=/usr --libdir=/usr/lib64 --enable-shared --disable-sound --disable-resample --disable-video --disable-opencore-amr && \
@@ -16,11 +15,12 @@ yum install -y epel-release && \
     make install 1> /dev/null && \
     ldconfig -v | grep pj && \
     cd /tmp && \
+
+    # upgrade to 13.11
     git clone https://gerrit.asterisk.org/asterisk -b 13.11.2 --depth 1 && \
     cd /tmp/asterisk && \
     contrib/scripts/get_mp3_source.sh && \
     ./configure --with-srtp --with-crypto --with-ssl CFLAGS='-g -O2 -mtune=native' --libdir=/usr/lib64 && \
-
     make menuselect.makeopts && \
          menuselect/menuselect \
          --disable BUILD_NATIVE \
@@ -34,6 +34,7 @@ yum install -y epel-release && \
          --enable format_mp3 && \
     make menuselect.makeopts && \
     make && make install 1> /dev/null && make samples 1> /dev/null && \
+
     rm -fr /tmp/* && \
     sed -i -e 's/# MAXFILES=/MAXFILES=/' /usr/sbin/safe_asterisk && \
     rpm -qa | grep devel | xargs rpm -e --nodeps && \
@@ -44,7 +45,10 @@ yum install -y epel-release && \
 # Run scripts
 ADD scripts/run.sh /scripts/run.sh
 
-RUN chmod -R 755 /scripts /var/log /etc/asterisk /var/run/asterisk /var/lib/asterisk /var/spool/asterisk && chmod a+rw /etc/passwd /var/log/asterisk /etc/asterisk /var/run/asterisk /var/lib/asterisk /var/spool/asterisk && chown -R root:root /scripts /var/log /etc/asterisk /var/run/asterisk  /var/lib/asterisk /var/spool/asterisk && chmod a+rw /etc/passwd /var/log/asterisk /etc/asterisk /var/run/asterisk /var/lib/asterisk /var/spool/asterisk
+RUN chmod -R 755 /scripts /var/log /etc/asterisk /var/run/asterisk /var/lib/asterisk /var/spool/asterisk && \
+    chmod a+rw /etc/passwd /var/log/asterisk /etc/asterisk /var/run/asterisk /var/lib/asterisk /var/spool/asterisk && \
+    chown -R root:root /scripts /var/log /etc/asterisk /var/run/asterisk /var/lib/asterisk /var/spool/asterisk && \
+    chmod a+rw /etc/passwd /var/log/asterisk /etc/asterisk /var/run/asterisk /var/lib/asterisk /var/spool/asterisk
 
 WORKDIR /etc/asterisk
 
